@@ -50,7 +50,7 @@ class SelfPublishModel(object):
         # This is to avoid triggering queries to retrieve the foreign object
         for field in self._meta.fields:
             if field.name in relevant_fields:
-                if type(field) in (ForeignKey, ):
+                if isinstance(field, ForeignKey):
                     # typically field.attname is field.name + "_id" ie field_id
                     relevant_fields_copy.append(field.attname)
                 else:
