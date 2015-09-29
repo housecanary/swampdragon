@@ -223,6 +223,10 @@ class ModelSerializer(Serializer):
                 val = list(get_property(self.instance, attr_name).all().values_list('pk', flat=True))
 
         # Serialize the field
+        return self._serialize_field(val)
+
+    def _serialize_field(self, val):
+        # subclass as needed
         return serialize_field(val)
 
     @classmethod
