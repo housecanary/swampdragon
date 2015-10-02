@@ -13,18 +13,10 @@ from swampdragon.serializers.validation import ModelValidationError
 class ModelSerializerMeta(object):
     def __init__(self, options):
         self.model = get_model(getattr(options, 'model'))
-        self.publish_fields = getattr(options, 'publish_fields', None)
-
-        if not self.publish_fields:
-            self.publish_fields = self.get_fields(self.model)
-
-        if isinstance(self.publish_fields, str):
-            self.publish_fields = (self.publish_fields, )
-
+        self.publish_fields = set(getattr(options, 'publish_fields', None) or self.get_fields(self.model))
+        self.always_publish_fields = set(getattr(options, 'always_publish_fields', None) or [])
+        self.never_publish_fields = set(getattr(options, 'never_publish_fields', None) or [])
         self.update_fields = getattr(options, 'update_fields', ())
-        if isinstance(self.update_fields, str):
-            self.update_fields = (self.update_fields, )
-
         self.id_field = getattr(options, 'id_field', 'pk')
         self.base_channel = getattr(options, 'base_channel', self.model._meta.model_name)
 
@@ -167,10 +159,13 @@ class ModelSerializer(Serializer):
         }
 
     def serialize(self, fields=None, ignore_serializers=None):
-        if not fields:
-            fields = self.opts.publish_fields
         if not self.instance:
             return None
+
+        if not fields:
+            fields = self.opts.publish_fields
+        else:
+            fields = set(fields)
 
         data = self.get_object_map_data()
 
@@ -179,11 +174,13 @@ class ModelSerializer(Serializer):
         data.update(get_id_mappings(self))
 
         # Serialize the fields
-        for field in fields:
+        for field in (fields | self.opts.always_publish_fields) - self.opts.never_publish_fields:
             data[field] = self._serialize_value(field, ignore_serializers)
 
         custom_serializer_functions = self._get_custom_field_serializers()
         for custom_function, name in custom_serializer_functions:
+            if name in self.opts.never_publish_fields:
+                continue
             serializer = getattr(self, name, None)
             if serializer:
                 serializer = get_serializer(serializer, self)
