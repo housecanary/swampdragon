@@ -50,7 +50,7 @@ def get_object_map(serializer, ignore_serializer_pairs=None):
                 model = field_type.field.related.parent_model
                 attname = field_type.field.related.var_name
             else:
-                model = field_type.field.related.model
+                model = field_type.field.rel.model
                 attname = field_type.field.rel.name
         elif isinstance(field_type, SingleRelatedObjectDescriptor):
             # o2o
@@ -83,7 +83,7 @@ def get_object_map(serializer, ignore_serializer_pairs=None):
                 model = field_type.field.related.parent_model
                 attname = field_type.field.related.var_name
             else:
-                model = field_type.field.related.model
+                model = field_type.field.rel.model
                 attname = field_type.field.rel.name
         else:
             raise Exception('Unhandled field type: %r' % field_type)
